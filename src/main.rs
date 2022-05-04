@@ -276,7 +276,7 @@ async fn stream_nar(
 
     let size = nixstore::query_path_info(&store_path, true)?.size;
     let mut rlength = size;
-    let mut offset = 0;
+    let mut _offset = 0;
     let mut res = HttpResponse::Ok();
 
     // Credit actix_web actix-files: https://github.com/actix/actix-web/blob/master/actix-files/src/named.rs#L525
@@ -284,7 +284,7 @@ async fn stream_nar(
         if let Ok(ranges_header) = ranges.to_str() {
             if let Ok(ranges) = HttpRange::parse(ranges_header, rlength) {
                 rlength = ranges[0].length;
-                offset = ranges[0].start;
+                _offset = ranges[0].start;
 
                 // don't allow compression middleware to modify partial content
                 res.insert_header((
@@ -294,7 +294,7 @@ async fn stream_nar(
 
                 res.insert_header((
                     http::header::CONTENT_RANGE,
-                    format!("bytes {}-{}/{}", offset, offset + rlength - 1, size,),
+                    format!("bytes {}-{}/{}", _offset, _offset + rlength - 1, size),
                 ));
             } else {
                 res.insert_header((http::header::CONTENT_RANGE, format!("bytes */{}", rlength)));
@@ -305,44 +305,11 @@ async fn stream_nar(
         };
     };
 
-    let mut child = Command::new("nix-store")
-        .arg("--dump")
-        .arg(&store_path)
-        .stdout(std::process::Stdio::piped())
-        .spawn()?;
-
     let (tx, rx) =
         tokio::sync::mpsc::unbounded_channel::<Result<actix_web::web::Bytes, actix_web::Error>>();
     let rx = tokio_stream::wrappers::UnboundedReceiverStream::new(rx);
-    let mut reader = BufReader::new(child.stdout.take().ok_or("")?);
     actix_web::rt::spawn(async move {
-        let mut send = 0;
-        while let Ok(bytes) = reader.fill_buf().await {
-            if bytes.is_empty() {
-                break;
-            }
-
-            let length = bytes.len();
-            if offset <= send + length {
-                let bytes = bytes.to_vec();
-                let start = if offset > send { offset - send } else { 0 };
-                let end = if (offset + rlength) < (send + length) {
-                    start + rlength
-                } else {
-                    length
-                };
-                reader.consume(length);
-                send += end;
-                let res = tx.send(Ok(web::Bytes::from(bytes).slice(start..end)));
-                if res.is_err() || end != length {
-                    child.start_kill().expect("Trying to kill child process");
-                    break;
-                }
-            } else {
-                send += length;
-                reader.consume(length);
-            }
-        }
+        nixstore::export_path_cb(&store_path, tx);
     });
 
     Ok(res

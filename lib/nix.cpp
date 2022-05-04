@@ -251,6 +251,32 @@ void nix_export_path_to(const char *path, int32_t fd) {
   })
 }
 
+struct CBSink : nix::BufferedSink {
+  CBSink(rust_callback cb, void *user_data)
+      : nix::BufferedSink(8 * 1024), cb(cb), user_data(user_data) {
+  }
+  ~CBSink() {
+    try {
+      flush();
+    } catch (...) {
+    }
+  }
+  void write(std::string_view data) override {
+    cb((const uint8_t *)data.data(), data.size(), user_data);
+  }
+
+private:
+  rust_callback cb;
+  void *user_data;
+};
+
+void nix_export_path_cb(const char *path, rust_callback cb, void *user_data) {
+  DEFAULT_TRY_CATCH({
+    CBSink sink(cb, user_data);
+    store()->exportPath(store()->parseStorePath(path), sink);
+  })
+}
+
 void nix_export_paths(int32_t fd, const char **paths) {
   DEFAULT_TRY_CATCH({
     nix::StorePathSet path_set;

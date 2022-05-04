@@ -106,6 +106,9 @@ void nix_export_path(const char *path, uint8_t *buffer, size_t size);
 
 void nix_export_path_to(const char *path, int32_t fd);
 
+typedef void (*rust_callback)(const uint8_t *buf, size_t len, void *user_data);
+void nix_export_path_cb(const char *path, rust_callback cb, void *user_data);
+
 /**
  *
  */

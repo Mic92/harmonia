@@ -7,6 +7,7 @@ use std::ffi::CStr;
 use std::os::raw::{c_char, c_uchar, c_ulong, c_void};
 #[cfg(unix)]
 use std::os::unix::io::RawFd;
+use std::slice::from_raw_parts;
 
 #[repr(C)]
 struct NixStrArray {
@@ -53,7 +54,12 @@ extern "C" {
     fn nix_is_valid_path(path: *const c_char) -> bool;
 
     fn nix_export_path(path: *const c_char, buf: *mut c_uchar, size: usize);
-    fn nix_export_path_to(paths: *const c_char, fd: i32);
+    fn nix_export_path_to(path: *const c_char, fd: i32);
+    fn nix_export_path_cb(
+        path: *const c_char,
+        cb: unsafe extern "C" fn(*const c_uchar, usize, *mut c_void),
+        user_data: *mut c_void,
+    );
 
     fn nix_query_path_info(path: *const c_char, base32: bool) -> *const NixPathInfo;
 
@@ -245,6 +251,32 @@ pub fn export_path_to(path: &str, fd: RawFd) -> Option<()> {
     unsafe { nix_export_path_to(c_path.as_ptr(), fd as i32) };
 
     Some(())
+}
+
+type Sender = tokio::sync::mpsc::UnboundedSender<Result<actix_web::web::Bytes, actix_web::Error>>;
+
+pub fn export_path_cb(path: &str, mut tx: Sender) -> Option<()> {
+    let c_path = match { std::ffi::CString::new(path) } {
+        Ok(v) => v,
+        Err(_) => return None,
+    };
+
+    unsafe {
+        nix_export_path_cb(
+            c_path.as_ptr(),
+            write_to_tx,
+            &mut tx as *mut Sender as *mut c_void,
+        )
+    };
+
+    Some(())
+}
+
+unsafe extern "C" fn write_to_tx(buf: *const c_uchar, len: usize, user_data: *mut c_void) {
+    let tx = &mut *(user_data as *mut Sender);
+    let slice = from_raw_parts(buf, len);
+    tx.send(Ok(actix_web::web::Bytes::from(slice)))
+        .expect("Should be able to send to tx");
 }
 
 pub fn get_build_log(drv_path: &str) -> Option<String> {
