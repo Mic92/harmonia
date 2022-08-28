@@ -146,8 +146,11 @@ fn extract_filename(path: &str) -> Option<String> {
     }
 }
 
-fn query_narinfo(store_path: &str, sign_key: Option<&str>) -> Result<NarInfo, Box<dyn Error>> {
-    let path_info = libnixstore::query_path_info(store_path, true)?;
+async fn query_narinfo(
+    store_path: &str,
+    sign_key: Option<&str>,
+) -> Result<NarInfo, Box<dyn Error>> {
+    let path_info = libnixstore::query_path_info(store_path, true).await?;
     let mut res = NarInfo {
         store_path: store_path.into(),
         url: format!(
@@ -219,7 +222,7 @@ async fn get_narinfo(
 ) -> Result<HttpResponse, Box<dyn Error>> {
     let hash = hash.into_inner();
     let store_path = some_or_404!(nixhash(&hash));
-    let narinfo = query_narinfo(&store_path, sign_key.as_deref())?;
+    let narinfo = query_narinfo(&store_path, sign_key.as_deref()).await?;
     let mut nars = data.lock().await;
     nars.entry(
         narinfo
@@ -254,7 +257,7 @@ async fn stream_nar(
     });
     let store_path = some_or_404!(nixhash(&hash));
 
-    let size = libnixstore::query_path_info(&store_path, true)?.size;
+    let size = libnixstore::query_path_info(&store_path, true).await?.size;
     let mut rlength = size;
     let mut offset = 0;
     let mut res = HttpResponse::Ok();
