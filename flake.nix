@@ -9,7 +9,10 @@
   };
   inputs.treefmt-nix.url = "github:numtide/treefmt-nix";
   inputs.treefmt-nix.inputs.nixpkgs.follows = "nixpkgs";
-  inputs.cargo-nix-plugin.url = "git+ssh://forgejo@git.ntd.one/anthropic/cargo-nix-plugin.git";
+  inputs.crate2nix = {
+    url = "github:Mic92/crate2nix/json-output";
+    flake = false;
+  };
   inputs.nix = {
     url = "github:nixos/nix";
     # We just need some test data, we're not building upstream nix.
@@ -37,7 +40,7 @@
         }:
         let
           packageSet = pkgs.callPackages ./packages.nix {
-            cargo-nix-plugin = inputs.cargo-nix-plugin;
+            crate2nix = inputs.crate2nix;
             nix-src = inputs.nix;
           };
         in
@@ -94,7 +97,7 @@
         {
           imports = [
             (lib.modules.importApply ./module.nix {
-              cargo-nix-plugin = inputs.cargo-nix-plugin;
+              crate2nix = inputs.crate2nix;
               nix-src = inputs.nix;
             })
           ];

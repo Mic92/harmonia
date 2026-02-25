@@ -1,13 +1,13 @@
 {
   pkgs,
   lib,
-  cargo-nix-plugin,
+  crate2nix,
   makeWrapper,
   nix,
   nix-src,
 }:
 let
-  cargoNix = cargo-nix-plugin.lib {
+  cargoNix = import "${crate2nix}/lib/build-from-json.nix" {
     inherit pkgs;
     src = lib.cleanSourceWith {
       src = ./.;
@@ -22,6 +22,7 @@ let
         || (lib.hasSuffix ".pem" path)
         || (type == "directory");
     };
+    resolvedJson = ./Cargo.json;
   };
 
   # The main binary crate
