@@ -9,7 +9,7 @@
   };
   inputs.treefmt-nix.url = "github:numtide/treefmt-nix";
   inputs.treefmt-nix.inputs.nixpkgs.follows = "nixpkgs";
-  inputs.crane.url = "github:ipetkov/crane";
+  inputs.cargo-nix-plugin.url = "git+ssh://forgejo@git.ntd.one/anthropic/cargo-nix-plugin.git";
   inputs.nix = {
     url = "github:nixos/nix";
     # We just need some test data, we're not building upstream nix.
@@ -37,14 +37,13 @@
         }:
         let
           packageSet = pkgs.callPackages ./packages.nix {
-            crane = inputs.crane;
+            cargo-nix-plugin = inputs.cargo-nix-plugin;
             nix-src = inputs.nix;
           };
         in
         {
           packages = {
             inherit (packageSet)
-              clippy
               default
               harmonia
               ;
@@ -66,10 +65,7 @@
               packages = lib.mapAttrs' (n: lib.nameValuePair "package-${n}") self'.packages;
               devShells = lib.mapAttrs' (n: lib.nameValuePair "devShell-${n}") self'.devShells;
             in
-            {
-              inherit (packageSet) tests;
-            }
-            // lib.optionalAttrs pkgs.stdenv.isLinux {
+             lib.optionalAttrs pkgs.stdenv.isLinux {
               nix-daemon = import ./tests/nix-daemon.nix testArgs;
               harmonia-daemon = import ./tests/harmonia-daemon.nix testArgs;
               chroot-store = import ./tests/chroot-store.nix testArgs;
@@ -98,7 +94,7 @@
         {
           imports = [
             (lib.modules.importApply ./module.nix {
-              crane = inputs.crane;
+              cargo-nix-plugin = inputs.cargo-nix-plugin;
               nix-src = inputs.nix;
             })
           ];

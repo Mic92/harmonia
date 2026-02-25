@@ -1,18 +1,38 @@
 {
   "nodes": {
-    "crane": {
+    "cargo-nix-plugin": {
+      "inputs": {
+        "crate2nix-torture": "crate2nix-torture",
+        "nixpkgs": "nixpkgs"
+      },
       "locked": {
-        "lastModified": 1771796463,
-        "narHash": "sha256-9bCDuUzpwJXcHMQYMS1yNuzYMmKO/CCwCexpjWOl62I=",
-        "owner": "ipetkov",
-        "repo": "crane",
-        "rev": "3d3de3313e263e04894f284ac18177bd26169bad",
-        "type": "github"
+        "lastModified": 1772048663,
+        "narHash": "sha256-1K9od7v6dpesLr6BXftmyM749lNKygu9FpIpTql9hf0=",
+        "ref": "refs/heads/main",
+        "rev": "4941fa92a3922fa20c91ca82ea6e31cf096de0e9",
+        "revCount": 11,
+        "type": "git",
+        "url": "ssh://forgejo@git.ntd.one/anthropic/cargo-nix-plugin.git"
       },
       "original": {
-        "owner": "ipetkov",
-        "repo": "crane",
-        "type": "github"
+        "type": "git",
+        "url": "ssh://forgejo@git.ntd.one/anthropic/cargo-nix-plugin.git"
+      }
+    },
+    "crate2nix-torture": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1772035878,
+        "narHash": "sha256-sfXI+E+NBsHORj3YhqLYCHdpqPJ6K2Av2vE7/zC43KY=",
+        "ref": "refs/heads/main",
+        "rev": "982efa95328b891855ca7c2f8cb4dd1096a34eb8",
+        "revCount": 62,
+        "type": "git",
+        "url": "ssh://forgejo@git.ntd.one/anthropic/crate2nix-torture.git"
+      },
+      "original": {
+        "type": "git",
+        "url": "ssh://forgejo@git.ntd.one/anthropic/crate2nix-torture.git"
       }
     },
     "flake-parts": {
@@ -53,6 +73,22 @@
     },
     "nixpkgs": {
       "locked": {
+        "lastModified": 1771923393,
+        "narHash": "sha256-Fy0+UXELv9hOE8WjYhJt8fMDLYTU2Dqn3cX4BwoGBos=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "ea7f1f06811ce7fcc81d6c6fd4213150c23edcf2",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "ref": "nixpkgs-unstable",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "nixpkgs_2": {
+      "locked": {
         "lastModified": 1771207753,
         "narHash": "sha256-b9uG8yN50DRQ6A7JdZBfzq718ryYrlmGgqkRm9OOwCE=",
         "ref": "nixpkgs-unstable",
@@ -70,10 +106,10 @@
     },
     "root": {
       "inputs": {
-        "crane": "crane",
+        "cargo-nix-plugin": "cargo-nix-plugin",
         "flake-parts": "flake-parts",
         "nix": "nix",
-        "nixpkgs": "nixpkgs",
+        "nixpkgs": "nixpkgs_2",
         "treefmt-nix": "treefmt-nix"
       }
     },
